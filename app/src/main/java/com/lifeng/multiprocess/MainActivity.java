@@ -10,6 +10,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.util.Iterator;
 import java.util.List;
 
 import butterknife.BindView;
@@ -34,20 +35,28 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if(!isServiceExisted("com.lifeng.multiprocess:remote")){
+                if(!isServiceExisted("com.lifeng.multiprocess")){
                     Log.d("tchl","@@@@@@@@@@@：");
                     Intent intent = new Intent(MainActivity.this, ProcessTestService.class);
                     startService(intent);
                 }
 
                 if(!isUIProcess()){
-                    Log.d("tchl","进程运行中");
+                    Log.d("tchl","当前进程不是主进程");
 
                 }else{
-                    Log.d("tchl","进程打开");
+                    Log.d("tchl","当前进程是主进程");
                 }
             }
         });
+
+        if(isLocalAppProcess("com.lifeng.multiprocess")){
+            Log.i("tchl","是当前应用主进程");
+        }else{
+            Log.i("tchl","不是当前应用主进程");
+        }
+
+
     }
 
     @Override
@@ -103,5 +112,29 @@ public class MainActivity extends AppCompatActivity {
         }
         return false;
     }
+    //如何判断是当前应用主进程
+    private boolean isLocalAppProcess(String packName) {
+        int myPid = android.os.Process.myPid();
+        ActivityManager activityManager = (ActivityManager) getSystemService(Context.ACTIVITY_SERVICE);
+        ActivityManager.RunningAppProcessInfo myProcess = null;
+        List runningProcesses = activityManager.getRunningAppProcesses();
+        if (runningProcesses != null) {
+            Iterator var11 = runningProcesses.iterator();
+            while (var11.hasNext()) {
+                ActivityManager.RunningAppProcessInfo process = (ActivityManager.RunningAppProcessInfo) var11.next();
+                Log.i("tchl", "process=" + process.processName + " pid=" + process.pid);
+                if (process.pid == myPid) {
+                    myProcess = process;
+                    break;
+                }
+            }
+        }
 
+        if (myProcess == null) {
+            Log.i("tchl", "Could not find running process for %d" + myPid);
+            return false;
+        } else {
+            return myProcess.processName.equals(packName);
+        }
+    }
 }
